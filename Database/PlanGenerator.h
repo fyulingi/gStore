@@ -32,6 +32,7 @@ public:
 	KVstore *kvstore;
 	BGPQuery *bgpquery;
 	Statistics *statistics;
+	BGPPlan* bgp_plan;
 	IDCachesSharePtr & id_caches;
 	TYPE_TRIPLE_NUM triples_num;
 	TYPE_PREDICATE_ID limitID_predicate;
@@ -63,7 +64,7 @@ public:
 	vector<unsigned> satellite_nodes;
 	set<unsigned> already_done_satellite;
 
-	PlanGenerator(KVstore *kvstore_, BGPQuery *bgpquery_, Statistics *statistics_, IDCachesSharePtr& id_caches_, TYPE_TRIPLE_NUM triples_num_,
+	PlanGenerator(KVstore *kvstore_, BGPQuery *bgpquery_, Statistics *statistics_, BGPPlan* _bgp_plan, IDCachesSharePtr& id_caches_, TYPE_TRIPLE_NUM triples_num_,
 				  	TYPE_PREDICATE_ID limitID_predicate_, TYPE_ENTITY_LITERAL_ID limitID_literal_, TYPE_ENTITY_LITERAL_ID limitID_entity_,
 				  TYPE_TRIPLE_NUM* pre2num_, TYPE_TRIPLE_NUM* pre2sub_, TYPE_TRIPLE_NUM* pre2obj_, shared_ptr<Transaction> txn_);
 

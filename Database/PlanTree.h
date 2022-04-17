@@ -125,7 +125,8 @@ public:
 
     PlanTree(unsigned first_node, BGPQuery *bgpquery, bool used_in_random_plan);
 
-    void delete_tree_node(Tree_node* root_node);
+	void node_to_string(BGPQuery* bgpquery, Tree_node *node, vector<string> &node_string, vector<int> &degree);
+	void plan_to_string(BGPQuery* bgpquery, BGPPlan *bgp_plan);
 
     void print_tree_node(Tree_node* node, BGPQuery* bgpquery);
     void print(BGPQuery* bgpquery);

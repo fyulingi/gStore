@@ -2603,6 +2603,8 @@ string update_flag,string remote_ip,string log_prefix)
 
 
 	FILE* output = NULL;
+	BGPPlan* bgp_plan = nullptr;
+	// BGPPlan* bgp_plan = new BGPPlan();  // delete in line 2940
 
 	ResultSet rs;
 	int query_time = Util::get_cur_time();
@@ -2610,7 +2612,9 @@ string update_flag,string remote_ip,string log_prefix)
 	//catch exception when this is an update query and has no update privilege
 	try{
 		cout << "begin query..." << endl;
+		current_database->bgp_plan = bgp_plan;
 		ret_val = current_database->query(sparql, rs, output, update_flag_bool,false,nullptr);
+		current_database->bgp_plan = nullptr;
 	}catch(string exception_msg){
 	
 		string content=exception_msg;
@@ -2932,6 +2936,8 @@ string update_flag,string remote_ip,string log_prefix)
 		//return false;
 		return;
 	}
+
+	delete bgp_plan;
 }
 
 /**

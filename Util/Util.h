@@ -1237,5 +1237,11 @@ class MD5
             memset(x, 0, sizeof x);
         }
 };
+
+struct BGPPlan
+{
+	std::vector<std::string> variable_nodes;
+	std::vector<int> node_degrees;
+};
 #endif //_UTIL_UTIL_H
 

@@ -113,11 +113,11 @@ void *preread_from_index(void *argv)
 }
 
 
-GeneralEvaluation::GeneralEvaluation(KVstore *_kvstore, Statistics *_statistics, StringIndex *_stringindex, QueryCache *_query_cache, \
+GeneralEvaluation::GeneralEvaluation(KVstore *_kvstore,BGPPlan* _bgp_plan, Statistics *_statistics, StringIndex *_stringindex, QueryCache *_query_cache, \
 	TYPE_TRIPLE_NUM *_pre2num,TYPE_TRIPLE_NUM *_pre2sub, TYPE_TRIPLE_NUM *_pre2obj, \
 	TYPE_TRIPLE_NUM _triples_num, TYPE_PREDICATE_ID _limitID_predicate, TYPE_ENTITY_LITERAL_ID _limitID_literal, \
 	TYPE_ENTITY_LITERAL_ID _limitID_entity, CSR *_csr, shared_ptr<Transaction> _txn):
-	kvstore(_kvstore), statistics(_statistics), stringindex(_stringindex), query_cache(_query_cache), pre2num(_pre2num), \
+	kvstore(_kvstore), bgp_plan(_bgp_plan), statistics(_statistics), stringindex(_stringindex), query_cache(_query_cache), pre2num(_pre2num), \
 	pre2sub(_pre2sub), pre2obj(_pre2obj), triples_num(_triples_num), limitID_predicate(_limitID_predicate), limitID_literal(_limitID_literal), \
 	limitID_entity(_limitID_entity), temp_result(NULL), fp(NULL), export_flag(false), csr(_csr), txn(_txn)
 {
@@ -314,7 +314,7 @@ bool GeneralEvaluation::doQuery()
 	// 	this->limitID_predicate, this->limitID_literal, this->limitID_entity,
 	// 	this->query_tree.Modifier_Distinct== QueryTree::Modifier_Distinct, txn);
 
-    this->optimizer_ = make_shared<Optimizer>(kvstore,statistics,pre2num,pre2sub,pre2obj,triples_num,limitID_predicate,
+    this->optimizer_ = make_shared<Optimizer>(kvstore,statistics,bgp_plan,pre2num,pre2sub,pre2obj,triples_num,limitID_predicate,
                                       limitID_literal,limitID_entity,txn);
 
 	// if (this->query_tree.checkWellDesigned())

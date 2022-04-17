@@ -9,6 +9,7 @@
 
 Optimizer::Optimizer(KVstore *kv_store,
                      Statistics *statistics,
+					 BGPPlan* _bgp_plan,
                      TYPE_TRIPLE_NUM *pre2num,
                      TYPE_TRIPLE_NUM *pre2sub,
                      TYPE_TRIPLE_NUM *pre2obj,
@@ -18,7 +19,7 @@ Optimizer::Optimizer(KVstore *kv_store,
                      TYPE_ENTITY_LITERAL_ID limitID_entity,
                      shared_ptr<Transaction> txn
 ):
-    kv_store_(kv_store), statistics(statistics), pre2num_(pre2num),
+    kv_store_(kv_store), statistics(statistics), bgp_plan(_bgp_plan), pre2num_(pre2num),
     pre2sub_(pre2obj),pre2obj_(pre2obj),triples_num_(triples_num),
     limitID_predicate_(limitID_predicate), limitID_literal_(limitID_literal),limitID_entity_(limitID_entity),
     txn_(std::move(txn)), executor_(kv_store,txn,limitID_predicate,limitID_literal,limitID_entity_){}
@@ -276,7 +277,7 @@ tuple<bool, shared_ptr<IntermediateResult>> Optimizer::DoQuery(std::shared_ptr<B
   {
 
     PlanTree* best_plan_tree;
-	PlanGenerator plan_generator(kv_store_, bgp_query.get(), statistics, var_candidates_cache, triples_num_,
+	PlanGenerator plan_generator(kv_store_, bgp_query.get(), statistics, bgp_plan, var_candidates_cache, triples_num_,
 								 limitID_predicate_, limitID_literal_, limitID_entity_, pre2num_, pre2sub_, pre2obj_, txn_);
 
     long t1 =Util::get_cur_time();
@@ -374,7 +375,7 @@ tuple<bool, shared_ptr<IntermediateResult>> Optimizer::DoQuery(std::shared_ptr<B
   else if(strategy == BasicQueryStrategy::limitK)
   {
     PlanTree* best_plan_tree;
-	PlanGenerator plan_generator(kv_store_, bgp_query.get(), statistics, var_candidates_cache, triples_num_,
+	PlanGenerator plan_generator(kv_store_, bgp_query.get(), statistics, bgp_plan, var_candidates_cache, triples_num_,
 								 limitID_predicate_, limitID_literal_, limitID_entity_, pre2num_, pre2sub_, pre2obj_, txn_);
 
 	long t1 =Util::get_cur_time();

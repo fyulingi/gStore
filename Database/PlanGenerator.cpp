@@ -26,11 +26,11 @@
 
 const unsigned PlanGenerator::SAMPLE_CACHE_MAX = 50;
 
-PlanGenerator::PlanGenerator(KVstore *kvstore_, BGPQuery *bgpquery_, Statistics *statistics_, IDCachesSharePtr &id_caches_,
+PlanGenerator::PlanGenerator(KVstore *kvstore_, BGPQuery *bgpquery_, Statistics *statistics_, BGPPlan* _bgp_plan, IDCachesSharePtr &id_caches_,
 							 TYPE_TRIPLE_NUM triples_num_, TYPE_PREDICATE_ID limitID_predicate_,
 							 TYPE_ENTITY_LITERAL_ID limitID_literal_, TYPE_ENTITY_LITERAL_ID limitID_entity_,
 							 TYPE_TRIPLE_NUM* pre2num_, TYPE_TRIPLE_NUM* pre2sub_, TYPE_TRIPLE_NUM* pre2obj_, shared_ptr<Transaction> txn_):
-					kvstore(kvstore_), bgpquery(bgpquery_), statistics(statistics_), id_caches(id_caches_), triples_num(triples_num_),
+					kvstore(kvstore_), bgpquery(bgpquery_), statistics(statistics_), bgp_plan(_bgp_plan), id_caches(id_caches_), triples_num(triples_num_),
 					limitID_predicate(limitID_predicate_), limitID_literal(limitID_literal_), limitID_entity(limitID_entity_),
 					pre2num(pre2num_), pre2sub(pre2sub_), pre2obj(pre2obj_), txn(txn_){};
 
@@ -1355,6 +1355,10 @@ PlanTree *PlanGenerator::get_plan(bool use_binary_join) {
 	print_plan_generator_info();
 	print_sample_info();
 	cout << endl << endl;
+
+	if(bgp_plan) {
+		best_plan->plan_to_string(bgpquery, this->bgp_plan);
+	}
 
 
 	return best_plan;

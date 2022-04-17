@@ -1087,6 +1087,31 @@ void PlanTree::add_satellitenode(BGPQuery *bgpquery, unsigned int satellitenode_
 // 	delete_tree_node(root_node);
 // }
 
+
+void PlanTree::node_to_string(BGPQuery* bgpquery, Tree_node *node, vector<string> &node_string, vector<int> &degree) {
+	int deg = 0;
+	if(node->left_node){
+		node_to_string(bgpquery, node->left_node, node_string, degree);
+		++deg;
+	}
+	if(node->right_node){
+		node_to_string(bgpquery, node->right_node, node_string, degree);
+		++deg;
+	}
+	node_string.push_back(node->node->join_type_ == StepOperation::JoinType::JoinNode ?
+						  bgpquery->get_var_name_by_id(node->node->join_node_->node_to_join_) : "BJ");
+
+	degree.push_back(deg);
+}
+
+void PlanTree::plan_to_string(BGPQuery* bgpquery, BGPPlan* bgp_plan) {
+	vector<int> &degree = bgp_plan->node_degrees;
+	vector<string> &node_string = bgp_plan->variable_nodes;
+	node_to_string(bgpquery, this->root_node, node_string, degree);
+
+}
+
+
 void PlanTree::print_tree_node(Tree_node *node, BGPQuery *bgpquery) {
 	if(node == nullptr)
 		return;
