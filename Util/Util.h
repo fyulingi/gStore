@@ -1242,6 +1242,17 @@ struct BGPPlan
 {
 	std::vector<std::string> variable_nodes;
 	std::vector<int> node_degrees;
+
+    std::vector<unsigned> true_card_num;
+    std::vector<unsigned> est_card_num;
+
+    std::vector<long> exe_time;
+
+    bool do_plan = false;
+    
+    bool input_plan_correctness = true;
+    std::vector<unsigned> node_ids;
+
 };
 #endif //_UTIL_UTIL_H
 

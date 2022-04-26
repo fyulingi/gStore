@@ -1545,19 +1545,17 @@ Database::unload()
 	delete this->literal_buffer;
 	this->literal_buffer = NULL;
 
-	//this->vstree->saveTree();
-	//delete this->vstree;
-	//this->vstree = NULL;
-	//cout << "delete kvstore" << endl;
 	delete this->kvstore;
 	this->kvstore = NULL;
 	//cout << "delete stringindex" << endl;
 	delete this->stringindex;
 	this->stringindex = NULL;
 
-	this->saveDBInfoFile();
-	this->writeIDinfo();
-	this->initIDinfo();
+	if(if_loaded) {
+		this->saveDBInfoFile();
+		this->writeIDinfo();
+		this->initIDinfo();
+	}
 
 	this->if_loaded = false;
 	this->clear_update_log();
@@ -2061,6 +2059,7 @@ Database::build(const string& _rdf_file, Socket& socket)
 	resJson = CreateJson(1, "building", msg);
 	socket.send(resJson);
 
+	this->if_loaded = true;
 	return true;
 }
 
@@ -2159,6 +2158,7 @@ Database::build(const string& _rdf_file)
 	//string cmd = "rm -rf " + _entry_file;
 	//system(cmd.c_str());
 	//cout << "signature file removed" << endl;
+	this->if_loaded = true;
 
 	return true;
 }

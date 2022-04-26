@@ -314,6 +314,7 @@ tuple<bool, shared_ptr<IntermediateResult>> Optimizer::DoQuery(std::shared_ptr<B
 
     long t_ = Util::get_cur_time();
     auto bfs_result = this->ExecutionBreathFirst(bgp_query,query_info,best_plan_tree->root_node,var_candidates_cache);
+    delete best_plan_tree;
 
     // todo: Destructor of PlanGenerator here
     long t5 = Util::get_cur_time();
@@ -523,9 +524,11 @@ tuple<bool,IntermediateResult> Optimizer::ExecutionBreathFirst(shared_ptr<BGPQue
       leaf_table = get<1>(initial_result);
 #ifdef OPTIMIZER_DEBUG_INFO
       // cout<<"join node ["<<bgp_query->get_var_name_by_id(step_operation->join_node_->node_to_join_)<<"]" << endl;
-	  cout<< "\tresult size:"<<leaf_table.values_->size();
+	    cout<< "\tresult size:"<<leaf_table.values_->size();
       long t2 = Util::get_cur_time();
       cout<< ",  used " << (t2 - t1) << "ms." <<endl;
+      bgp_plan->true_card_num.push_back(leaf_table.values_->size());
+      bgp_plan->exe_time.push_back(t2-t1);
 #endif
     }
     else if(operation_type== StepOperation::JoinType::GenerateCandidates)
@@ -643,6 +646,8 @@ tuple<bool,IntermediateResult> Optimizer::ExecutionBreathFirst(shared_ptr<BGPQue
     cout<<"\tresult size:"<<get<1>(step_result).values_->size();
     long t2 = Util::get_cur_time();
     cout<< ",  used " << (t2 - t1) << "ms." <<endl;
+    bgp_plan->true_card_num.push_back(get<1>(step_result).values_->size());
+    bgp_plan->exe_time.push_back(t2-t1);
 #endif
     return step_result;
   }
@@ -701,6 +706,8 @@ tuple<bool,IntermediateResult> Optimizer::ExecutionBreathFirst(shared_ptr<BGPQue
     cout<<"\tresult size:"<<get<1>(join_result).values_->size();
     long t2 = Util::get_cur_time();
     cout<< ",  used " << (t2 - t1) << "ms." <<endl;
+    bgp_plan->true_card_num.push_back(get<1>(join_result).values_->size());
+    bgp_plan->exe_time.push_back(t2-t1);
 #endif
     return std::move(join_result);
   }

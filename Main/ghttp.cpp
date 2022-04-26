@@ -37,7 +37,7 @@ using namespace rapidjson;
 using namespace std;
 //Added for the json-example:
 using namespace boost::property_tree;
-
+using namespace antlrcpp;
 typedef SimpleWeb::Server<SimpleWeb::HTTP> HttpServer;
 typedef SimpleWeb::Client<SimpleWeb::HTTP> HttpClient;
 
@@ -145,6 +145,8 @@ void restore_thread_new(const shared_ptr<HttpServer::Response>& response,string 
 
 void query_thread_new(const shared_ptr<HttpServer::Response>& response,string db_name,string sparql,string format,
 string update_flag,string remote_ip,string log_prefix);
+// void query_thread_new(const shared_ptr<HttpServer::Response>& response,string db_name,string sparql,string plan_to_do, string format,
+// string update_flag,string remote_ip,string log_prefix);
 
 void export_thread_new(const shared_ptr<HttpServer::Response>& response,string db_name,string db_path,string username);
 
@@ -2500,6 +2502,9 @@ void restore_thread_new(const shared_ptr<HttpServer::Response>& response,string 
  * @param {string} file:the out file path
  * @return {*}
  */
+// void query_thread_new(const shared_ptr<HttpServer::Response>& response,
+// string db_name,string sparql, string plan_to_do, string format,
+// string update_flag,string remote_ip,string log_prefix)
 void query_thread_new(const shared_ptr<HttpServer::Response>& response,
 string db_name,string sparql,string format,
 string update_flag,string remote_ip,string log_prefix)
@@ -2603,8 +2608,8 @@ string update_flag,string remote_ip,string log_prefix)
 
 
 	FILE* output = NULL;
-	BGPPlan* bgp_plan = nullptr;
-	// BGPPlan* bgp_plan = new BGPPlan();  // delete in line 2940
+	//BGPPlan* bgp_plan = nullptr;
+	BGPPlan* bgp_plan = new BGPPlan();  // delete in line 2940
 
 	ResultSet rs;
 	int query_time = Util::get_cur_time();
@@ -2744,7 +2749,14 @@ string update_flag,string remote_ip,string log_prefix)
 				return;
 			}
 			
-			
+			string plan_1 = antlrcpp::join(bgp_plan -> variable_nodes, "");
+			stringstream plan_2_ss;
+			copy(bgp_plan -> node_degrees.begin(), bgp_plan -> node_degrees.end(), ostream_iterator<int>(plan_2_ss, ""));
+			string plan_2 = plan_2_ss.str();
+			string plan = plan_1 + plan_2;
+			cout << "Plan Output: " + plan << endl;
+			resDoc.AddMember("Plan", StringRef(plan.c_str()), allocator);
+
 			resDoc.AddMember("StatusCode", 0, allocator);
 			resDoc.AddMember("StatusMsg", "success", allocator);
 			resDoc.AddMember("AnsNum", rs_ansNum, allocator);

@@ -108,7 +108,9 @@ main(int argc, char * argv[])
 			{
 				long tv_begin = Util::get_cur_time();
 				
+				BGPPlan *bgp_plan = new BGPPlan();
 				_db.load();
+				_db.bgp_plan = bgp_plan;
 				cout << "finish loading" << endl;
 
 				string query = Util::getQueryFromFile(queryfile.c_str());
@@ -159,6 +161,7 @@ main(int argc, char * argv[])
 				}
 
 				long tv_end = Util::get_cur_time();
+				delete bgp_plan;
 				//stringstream ss;
 				cout << "query database successfully, Used " << (tv_end - tv_begin) << " ms" << endl;
 				//Log.Info(ss.str().c_str());

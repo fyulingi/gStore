@@ -1319,45 +1319,60 @@ PlanTree *PlanGenerator::get_plan(bool use_binary_join) {
 	}
 
 
-	considervarscan();
+	PlanTree* best_plan;
 
-	// cout << "print for var_to_num_map:" << endl;
-	// for(auto x:var_to_num_map)
-	// 	cout << x.first << "   " << x.second<<endl;
+	if(bgp_plan->do_plan) {
 
-	// should be var num not include satellite node
-	// should not include pre_var num
-	for(unsigned var_num = 2; var_num <= join_nodes.size(); ++var_num) {
+		considervarscan();
 
-		// if i want to complete this, i need to know whether the input query is linded or not
-		// answer: yes, input query is linked by var
-		considerwcojoin(var_num);
+		// cout << "print for var_to_num_map:" << endl;
+		// for(auto x:var_to_num_map)
+		// 	cout << x.first << "   " << x.second<<endl;
 
-		if(use_binary_join)
-			if(var_num >= 5)
-				considerbinaryjoin(var_num);
-	}
+		// should be var num not include satellite node
+		// should not include pre_var num
+		for(unsigned var_num = 2; var_num <= join_nodes.size(); ++var_num) {
 
-	for(auto x:card_cache){
-		for(auto y:x){
-			for(auto z:y.first) cout << z << " ";
-			cout << "card: " << y.second << endl;
+			// if i want to complete this, i need to know whether the input query is linded or not
+			// answer: yes, input query is linked by var
+			considerwcojoin(var_num);
+
+			if(use_binary_join)
+				if(var_num >= 5)
+					considerbinaryjoin(var_num);
 		}
-	}
 
-	PlanTree* best_plan = get_best_plan_by_num(join_nodes.size());
+		for(auto x:card_cache){
+			for(auto y:x){
+				for(auto z:y.first) cout << z << " ";
+				cout << "card: " << y.second << endl;
+			}
+		}
 
-	// todo: 这个卫星点应该也有卫星谓词变量
-	// s ?p ?o. 在之前的计划中已经加入了?o, 则这一步也需要加入?p
-	addsatellitenode(best_plan);
+		best_plan = get_best_plan_by_num(join_nodes.size());
 
-	cout << endl << endl;
-	print_plan_generator_info();
-	print_sample_info();
-	cout << endl << endl;
+		// todo: 这个卫星点应该也有卫星谓词变量
+		// s ?p ?o. 在之前的计划中已经加入了?o, 则这一步也需要加入?p
+		addsatellitenode(best_plan);
 
-	if(bgp_plan) {
-		best_plan->plan_to_string(bgpquery, this->bgp_plan);
+		cout << endl << endl;
+		print_plan_generator_info();
+		print_sample_info();
+		cout << endl << endl;
+
+		if(bgp_plan) {
+			best_plan->plan_to_string(bgpquery, this->bgp_plan);
+			vector<vector<unsigned>> node_vec;
+			unsigned node_vec_index = 0;
+			for(unsigned i = 0; i < bgp_plan->variable_nodes.size(); ++i) {
+				if(bgp_plan->node_degrees[i] != 2) {
+					node_vec[node_vec_index].push_back(bgp_plan->node_ids[i]);
+					bgp_plan->est_card_num.push_back(card_cache[node_vec[node_vec_index].size()-1][node_vec[node_vec_index]]);
+				}
+			}
+		}
+	} else{
+		best_plan = new PlanTree(bgpquery, this->bgp_plan);
 	}
 
 

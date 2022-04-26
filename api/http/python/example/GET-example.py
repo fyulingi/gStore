@@ -36,7 +36,7 @@ print(res)
 
 # load the database 
 res = gc.load("lubm")
-print(res);
+print(res)
 
 # show all users
 res = gc.showuser()
