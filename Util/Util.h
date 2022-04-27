@@ -1248,6 +1248,7 @@ struct BGPPlan
 
     std::vector<long> exe_time;
 
+	// do_plan true means seed a plan
     bool do_plan = false;
     
     bool input_plan_correctness = true;

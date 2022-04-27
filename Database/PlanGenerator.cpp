@@ -1196,16 +1196,16 @@ void PlanGenerator::considerwcojoin(unsigned int var_num) {
 
 			// for(auto x:last_node_plan.first) cout << x << " ";
 			// cout << "to node " << next_node << " , cost: " << cost << endl;
-			if(var_num == 2){
-				long long this_cost = cost_model_for_p2so_optimization(last_node_plan.first[0], next_node);
-				cout << "in wcojoin, " << last_node_plan.first[0] << " to " << next_node << endl;
-				cout << "\t" << "normal cost: " << cost << ", p2so cost: " << this_cost << endl;
-				if(this_cost < cost){
-					delete new_plan;
-					new_plan = new PlanTree(last_node_plan.first[0], next_node, bgpquery);
-					new_plan->plan_cost = this_cost;
-				}
-			}
+			// if(var_num == 2){
+			// 	long long this_cost = cost_model_for_p2so_optimization(last_node_plan.first[0], next_node);
+			// 	cout << "in wcojoin, " << last_node_plan.first[0] << " to " << next_node << endl;
+			// 	cout << "\t" << "normal cost: " << cost << ", p2so cost: " << this_cost << endl;
+			// 	if(this_cost < cost){
+			// 		delete new_plan;
+			// 		new_plan = new PlanTree(last_node_plan.first[0], next_node, bgpquery);
+			// 		new_plan->plan_cost = this_cost;
+			// 	}
+			// }
 
 
 			insert_this_plan_to_cache(new_plan, new_node_vec, var_num);
@@ -1321,58 +1321,78 @@ PlanTree *PlanGenerator::get_plan(bool use_binary_join) {
 
 	PlanTree* best_plan;
 
-	if(bgp_plan->do_plan) {
-
-		considervarscan();
-
-		// cout << "print for var_to_num_map:" << endl;
-		// for(auto x:var_to_num_map)
-		// 	cout << x.first << "   " << x.second<<endl;
-
-		// should be var num not include satellite node
-		// should not include pre_var num
-		for(unsigned var_num = 2; var_num <= join_nodes.size(); ++var_num) {
-
-			// if i want to complete this, i need to know whether the input query is linded or not
-			// answer: yes, input query is linked by var
-			considerwcojoin(var_num);
-
-			if(use_binary_join)
-				if(var_num >= 5)
-					considerbinaryjoin(var_num);
-		}
-
-		for(auto x:card_cache){
-			for(auto y:x){
-				for(auto z:y.first) cout << z << " ";
-				cout << "card: " << y.second << endl;
-			}
-		}
-
-		best_plan = get_best_plan_by_num(join_nodes.size());
-
-		// todo: 这个卫星点应该也有卫星谓词变量
-		// s ?p ?o. 在之前的计划中已经加入了?o, 则这一步也需要加入?p
-		addsatellitenode(best_plan);
-
-		cout << endl << endl;
-		print_plan_generator_info();
-		print_sample_info();
-		cout << endl << endl;
-
-		if(bgp_plan) {
-			best_plan->plan_to_string(bgpquery, this->bgp_plan);
-			vector<vector<unsigned>> node_vec;
-			unsigned node_vec_index = 0;
-			for(unsigned i = 0; i < bgp_plan->variable_nodes.size(); ++i) {
-				if(bgp_plan->node_degrees[i] != 2) {
-					node_vec[node_vec_index].push_back(bgp_plan->node_ids[i]);
-					bgp_plan->est_card_num.push_back(card_cache[node_vec[node_vec_index].size()-1][node_vec[node_vec_index]]);
-				}
-			}
-		}
-	} else{
+	if(bgp_plan && bgp_plan->do_plan) {
 		best_plan = new PlanTree(bgpquery, this->bgp_plan);
+		return best_plan;
+	}
+
+	considervarscan();
+
+	// cout << "print for var_to_num_map:" << endl;
+	// for(auto x:var_to_num_map)
+	// 	cout << x.first << "   " << x.second<<endl;
+
+	// should be var num not include satellite node
+	// should not include pre_var num
+	for(unsigned var_num = 2; var_num <= join_nodes.size(); ++var_num) {
+
+		// if i want to complete this, i need to know whether the input query is linded or not
+		// answer: yes, input query is linked by var
+		considerwcojoin(var_num);
+
+		if(use_binary_join)
+			if(var_num >= 5)
+				considerbinaryjoin(var_num);
+	}
+
+	for(auto x:card_cache){
+		for(auto y:x){
+			for(auto z:y.first) cout << z << " ";
+			cout << "card: " << y.second << endl;
+		}
+	}
+
+	best_plan = get_best_plan_by_num(join_nodes.size());
+
+	// todo: 这个卫星点应该也有卫星谓词变量
+	// s ?p ?o. 在之前的计划中已经加入了?o, 则这一步也需要加入?p
+	addsatellitenode(best_plan);
+
+	cout << endl << endl;
+	print_plan_generator_info();
+	print_sample_info();
+	cout << endl << endl;
+
+	if(bgp_plan) {
+		best_plan->plan_to_string(bgpquery, this->bgp_plan);
+		stack<vector<unsigned>> nodes_stack;
+		// vector<vector<unsigned>> node_vec;
+		// unsigned node_vec_index = 0;
+		for(unsigned i = 0; i < bgp_plan->variable_nodes.size(); ++i) {
+			if(bgp_plan->node_degrees[i] == 0) {
+				bgp_plan->est_card_num.push_back(var_to_num_map[bgp_plan->node_ids[i]]);
+				nodes_stack.push(vector<unsigned>(bgp_plan->node_ids[i]));
+			}
+			if(bgp_plan->node_degrees[i] == 1) {
+				vector<unsigned> node_vec = nodes_stack.top();
+				nodes_stack.pop();
+				node_vec.push_back(bgp_plan->node_ids[i]);
+				sort(node_vec.begin(), node_vec.end());
+				bgp_plan->est_card_num.push_back(card_cache[node_vec.size()-2][node_vec]);
+				nodes_stack.push(node_vec);
+			}
+			if(bgp_plan->node_degrees[i] == 2) {
+				vector<unsigned> node_vec1 = nodes_stack.top();
+				nodes_stack.pop();
+				vector<unsigned> node_vec2 = nodes_stack.top();
+				nodes_stack.pop();
+				node_vec1.insert(node_vec1.end(), node_vec2.begin(), node_vec2.end());
+				sort(node_vec1.begin(),node_vec1.end());
+				node_vec1.erase(unique(node_vec1.begin(), node_vec1.end()), node_vec1.end());
+				bgp_plan->est_card_num.push_back(card_cache[node_vec1.size()-2][node_vec1]);
+				nodes_stack.push(node_vec1);
+			}
+		}
 	}
 
 
