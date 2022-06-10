@@ -2995,7 +2995,7 @@ bool GeneralEvaluation::checkBasicQueryCache(vector<QueryTree::GroupPattern::Pat
 		TempResultSet *temp = new TempResultSet();
 		temp->results.push_back(TempResult());
 		long tv_bfcheck = Util::get_cur_time();
-		success = this->query_cache->checkCached(basic_query, useful, temp->results[0]);
+		// success = this->query_cache->checkCached(basic_query, useful, temp->results[0]);
 		long tv_afcheck = Util::get_cur_time();
 		printf("after checkCache, used %ld ms.\n", tv_afcheck - tv_bfcheck);
 

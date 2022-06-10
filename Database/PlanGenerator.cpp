@@ -676,6 +676,13 @@ long long PlanGenerator::cost_model_for_wco(PlanTree *last_plan, const vector<un
 	return last_plan->plan_cost + card_estimator(last_plan_node, next_node, now_plan_node);
 }
 
+long long PlanGenerator::cost_model_for_wco_limitk(PlanTree *last_plan, const vector<unsigned int> &last_plan_node,
+												   			unsigned int next_node, const vector<unsigned int> &now_plan_node) {
+	card_estimator(last_plan_node, next_node, now_plan_node);
+	long long this_join_cost = max((double)get_card(now_plan_node)/get_card(last_plan_node), (double)1);
+	return this_join_cost;
+}
+
 long long PlanGenerator::cost_model_for_binary(const vector<unsigned> &plan_a_nodes, const vector<unsigned> &plan_b_nodes,
 											   PlanTree* plan_a, PlanTree* plan_b){
 
@@ -1148,7 +1155,8 @@ void PlanGenerator::considervarscan() {
 		}
 		var_to_sample_cache[var_id] = std::move(need_insert_vec);
 
-		new_scan->plan_cost = max((unsigned)1, var_to_num_map[var_id]/2);
+		new_scan->plan_cost = 0;
+		// new_scan->plan_cost = max((unsigned)1, var_to_num_map[var_id]/2);
 
 
 	}
@@ -1173,7 +1181,7 @@ void PlanGenerator::get_nei_by_sub_plan_nodes(const vector<unsigned int> &last_p
 }
 
 // add one node, the added node need to be linked by nodes in plan before
-void PlanGenerator::considerwcojoin(unsigned int var_num) {
+void PlanGenerator::considerwcojoin(unsigned int var_num, bool not_limitk) {
 	auto plan_tree_list = plan_cache[var_num - 2];
 	for(const auto &last_node_plan : plan_tree_list){
 		// if(last_node_plan.first == vector<unsigned>{0}) continue;
@@ -1190,8 +1198,15 @@ void PlanGenerator::considerwcojoin(unsigned int var_num) {
 			sort(new_node_vec.begin(), new_node_vec.end());
 
 			PlanTree* new_plan = new PlanTree(last_best_plan, bgpquery, next_node);
-			long long cost = cost_model_for_wco(last_best_plan, last_node_plan.first,
+			// if(not_limitk)
+				long long cost = cost_model_for_wco(last_best_plan, last_node_plan.first,
 													next_node, new_node_vec);
+			// else {
+			// 	long long cost = cost_model_for_wco_limitk(last_best_plan, last_node_plan.first,
+			// 											   next_node, new_node_vec);
+			// 	new_plan->sum_one_cost = cost + last_best_plan->sum_one_cost;
+			// 	cost = last_best_plan->cost + new_plan->sum_one_cost;
+			// }
 			new_plan->plan_cost = cost;
 
 			// for(auto x:last_node_plan.first) cout << x << " ";
@@ -1338,7 +1353,7 @@ PlanTree *PlanGenerator::get_plan(bool use_binary_join) {
 
 		// if i want to complete this, i need to know whether the input query is linded or not
 		// answer: yes, input query is linked by var
-		considerwcojoin(var_num);
+		considerwcojoin(var_num, use_binary_join);
 
 		if(use_binary_join)
 			if(var_num >= 5)
@@ -1371,7 +1386,7 @@ PlanTree *PlanGenerator::get_plan(bool use_binary_join) {
 		for(unsigned i = 0; i < bgp_plan->variable_nodes.size(); ++i) {
 			if(bgp_plan->node_degrees[i] == 0) {
 				bgp_plan->est_card_num.push_back(var_to_num_map[bgp_plan->node_ids[i]]);
-				nodes_stack.push(vector<unsigned>(bgp_plan->node_ids[i]));
+				nodes_stack.push(vector<unsigned>{bgp_plan->node_ids[i]});
 			}
 			if(bgp_plan->node_degrees[i] == 1) {
 				vector<unsigned> node_vec = nodes_stack.top();

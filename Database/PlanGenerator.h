@@ -96,6 +96,8 @@ public:
 	long long cost_model_for_p2so_optimization(unsigned node_1_id, unsigned node_2_id);
 	long long cost_model_for_wco(PlanTree* last_plan, const vector<unsigned> &last_plan_node,
 												 unsigned next_node, const vector<unsigned> &now_plan_node);
+	long long cost_model_for_wco_limitk(PlanTree* last_plan, const vector<unsigned> &last_plan_node,
+											unsigned next_node, const vector<unsigned> &now_plan_node);
 
 	long long cost_model_for_binary(const vector<unsigned> &plan_a_nodes, const vector<unsigned> &plan_b_nodes,
 										PlanTree* plan_a, PlanTree* plan_b);
@@ -114,7 +116,7 @@ public:
 	vector<shared_ptr<FeedOneNode>> completecandidate();
 	void considervarscan();
 	void get_nei_by_sub_plan_nodes(const vector<unsigned> &last_plan_node, set<unsigned> &nei_node);
-	void considerwcojoin(unsigned var_num);
+	void considerwcojoin(unsigned var_num, bool not_limitk);
 	void considerbinaryjoin(unsigned var_num);
 	void addsatellitenode(PlanTree* best_plan);
 

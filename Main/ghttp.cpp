@@ -143,10 +143,8 @@ void backup_thread_new(const shared_ptr<HttpServer::Response>& response,string d
 
 void restore_thread_new(const shared_ptr<HttpServer::Response>& response,string db_name,string backup_path,string username);
 
-void query_thread_new(const shared_ptr<HttpServer::Response>& response,string db_name,string sparql,string format,
+void query_thread_new(const shared_ptr<HttpServer::Response>& response,string db_name,string sparql,string custom_plan,string format,
 string update_flag,string remote_ip,string log_prefix);
-// void query_thread_new(const shared_ptr<HttpServer::Response>& response,string db_name,string sparql,string plan_to_do, string format,
-// string update_flag,string remote_ip,string log_prefix);
 
 void export_thread_new(const shared_ptr<HttpServer::Response>& response,string db_name,string db_path,string username);
 
@@ -543,35 +541,38 @@ public:
 	string db_name;
 	string format;
 	string db_query;
+	string custom_plan;
 	string remote_ip;
 	string querytype;
 	string log_prefix;
 	const shared_ptr<HttpServer::Response> response;
 	const shared_ptr<HttpServer::Request> request;
-	Task(bool flag, string name, string ft, string query, const shared_ptr<HttpServer::Response>& res, const shared_ptr<HttpServer::Request>& req);
+	Task(bool flag, string name, string ft, string query, string plan, const shared_ptr<HttpServer::Response>& res, const shared_ptr<HttpServer::Request>& req);
 	Task(string name, string ft, string _remote_ip,string _log_prefix,string _querytype,
-string query, const shared_ptr<HttpServer::Response>& res, const shared_ptr<HttpServer::Request>& req);
+string query, string plan, const shared_ptr<HttpServer::Response>& res, const shared_ptr<HttpServer::Request>& req);
 	~Task();
 	void run();
 };
 Task::Task(bool flag, string name, string ft, 
-string query, const shared_ptr<HttpServer::Response>& res,
+string query, string plan, const shared_ptr<HttpServer::Response>& res,
  const shared_ptr<HttpServer::Request>& req):response(res),request(req)
 {
 	update = flag;
 	db_name = name;
 	format = ft;
 	db_query = query;
+	custom_plan = plan;
 }
 
 Task::Task(string name, string ft,string _remote_ip,string _log_prefix,string _querytype,
-string query, const shared_ptr<HttpServer::Response>& res,
+string query, string plan, const shared_ptr<HttpServer::Response>& res,
  const shared_ptr<HttpServer::Request>& req):response(res),request(req)
 {
 	//update = flag;
 	db_name = name;
 	format = ft;
 	db_query = query;
+	custom_plan = plan;
 	querytype=_querytype;
 	remote_ip=_remote_ip;
 	log_prefix=_log_prefix;
@@ -583,7 +584,7 @@ Task::~Task()
 void Task::run()
 {
 	//query_thread(update, db_name, format, db_query, response, request);
-	query_thread_new(response,db_name,db_query,format,querytype,remote_ip,log_prefix);
+	query_thread_new(response,db_name,db_query,custom_plan,format,querytype,remote_ip,log_prefix);
 }
 
 class Thread
@@ -2502,12 +2503,9 @@ void restore_thread_new(const shared_ptr<HttpServer::Response>& response,string 
  * @param {string} file:the out file path
  * @return {*}
  */
-// void query_thread_new(const shared_ptr<HttpServer::Response>& response,
-// string db_name,string sparql, string plan_to_do, string format,
-// string update_flag,string remote_ip,string log_prefix)
 void query_thread_new(const shared_ptr<HttpServer::Response>& response,
-string db_name,string sparql,string format,
-string update_flag,string remote_ip,string log_prefix)
+string db_name, string sparql, string custom_plan, string format,
+string update_flag, string remote_ip, string log_prefix)
 {
     string error="";
 	error=checkparamValue("db_name",db_name);
@@ -2610,6 +2608,7 @@ string update_flag,string remote_ip,string log_prefix)
 	FILE* output = NULL;
 	//BGPPlan* bgp_plan = nullptr;
 	BGPPlan* bgp_plan = new BGPPlan();  // delete in line 2940
+	cout << "-----------------------------" << endl << custom_plan << endl;
 
 	ResultSet rs;
 	int query_time = Util::get_cur_time();
@@ -2749,13 +2748,30 @@ string update_flag,string remote_ip,string log_prefix)
 				return;
 			}
 			
-			string plan_1 = antlrcpp::join(bgp_plan -> variable_nodes, "");
-			stringstream plan_2_ss;
-			copy(bgp_plan -> node_degrees.begin(), bgp_plan -> node_degrees.end(), ostream_iterator<int>(plan_2_ss, ""));
-			string plan_2 = plan_2_ss.str();
-			string plan = plan_1 + plan_2;
-			cout << "Plan Output: " + plan << endl;
-			resDoc.AddMember("Plan", StringRef(plan.c_str()), allocator);
+                        string plan_nodes = antlrcpp::join(bgp_plan -> variable_nodes, "");
+                        
+                        stringstream plan_degrees_ss;
+                        copy(bgp_plan -> node_degrees.begin(), bgp_plan -> node_degrees.end(), ostream_iterator<int>(plan_degrees_ss, ""));
+                        string plan_degrees = plan_degrees_ss.str();
+                        
+                        
+                        stringstream plan_true_card_num_ss;
+                        copy(bgp_plan -> true_card_num.begin(), bgp_plan -> true_card_num.end(), ostream_iterator<unsigned>(plan_true_card_num_ss, ","));
+                        string plan_true_card_num = plan_true_card_num_ss.str().substr(0, plan_true_card_num_ss.str().length()-1);
+                        
+                        
+                        stringstream plan_est_card_num_ss;
+                        copy(bgp_plan -> est_card_num.begin(), bgp_plan -> est_card_num.end(), ostream_iterator<unsigned>(plan_est_card_num_ss, ","));
+                        string plan_est_card_num = plan_est_card_num_ss.str().substr(0, plan_est_card_num_ss.str().length()-1);
+                        
+                        stringstream plan_exe_time_ss;
+                        copy(bgp_plan -> exe_time.begin(), bgp_plan -> exe_time.end(), ostream_iterator<long>(plan_exe_time_ss, ","));
+                        string plan_exe_time = plan_exe_time_ss.str().substr(0, plan_exe_time_ss.str().length()-1);
+                        
+                        
+                        string plan = plan_nodes + ";" + plan_degrees + ";" + plan_true_card_num + ";" + plan_est_card_num + ";" + plan_exe_time;
+                        cout << "Plan Output: " + plan << endl;
+                        resDoc.AddMember("Plan", StringRef(plan.c_str()), allocator);                        
 
 			resDoc.AddMember("StatusCode", 0, allocator);
 			resDoc.AddMember("StatusMsg", "success", allocator);
@@ -4152,6 +4168,7 @@ const shared_ptr<HttpServer::Request>& request, string RequestType)
 	{
         string format="";
 		string sparql="";
+		string plan = "";
 	
 		string querytype="0";
 		if (checkPrivilege(username, "update", db_name) ==0)
@@ -4166,6 +4183,8 @@ const shared_ptr<HttpServer::Request>& request, string RequestType)
 		{
 			format=WebUrl::CutParam(url,"format");
 			sparql=WebUrl::CutParam(url,"sparql");
+			plan = WebUrl::CutParam(url, "plan");
+			cout << "4186============" << plan << endl;
 		
 			sparql=UrlDecode(sparql);
 		}
@@ -4180,6 +4199,11 @@ const shared_ptr<HttpServer::Request>& request, string RequestType)
 			{
 				sparql = document["sparql"].GetString();
 			}
+			// if (document.HasMember("plan")&&document["plan"].IsString())
+			// {
+				plan = document["plan"].GetString();
+			cout << "4200============" << plan << endl;
+			// }
 			
 		
 		}
@@ -4189,7 +4213,7 @@ const shared_ptr<HttpServer::Request>& request, string RequestType)
 		}
 
        query_num++;
-	   Task* task = new Task(db_name, format,remote_ip,log_prefix,querytype,sparql, response, request);
+	   Task* task = new Task(db_name, format,remote_ip,log_prefix,querytype,sparql, plan, response, request);
 	    pool.AddTask(task);
 	//thread t(&query_thread, db_name, format, db_query, response, request);
 	//t.detach();
@@ -4598,7 +4622,8 @@ bool query_handler0_sparql_conform(const HttpServer& server, const shared_ptr<Ht
     }
 
     query_num++;
-    Task* task = new Task(0, db_name, format, db_query, response, request);
+	string plan = "";
+    Task* task = new Task(0, db_name, format, db_query, plan, response, request);
     pool.AddTask(task);
     return true;
 }
