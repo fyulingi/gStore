@@ -2609,6 +2609,34 @@ string update_flag, string remote_ip, string log_prefix)
 	//BGPPlan* bgp_plan = nullptr;
 	BGPPlan* bgp_plan = new BGPPlan();  // delete in line 2940
 	cout << "-----------------------------" << endl << custom_plan << endl;
+        if(!custom_plan.empty()) {
+		cout << "received custom plan!" << endl;
+		try {
+                	bgp_plan -> do_plan = true;
+			vector<string> plan_vec;
+                        int sep_pos = custom_plan.find(";");
+			string variables_str = custom_plan.substr(1, sep_pos - 1);
+                        string degrees_str = custom_plan.substr(sep_pos + 1);
+                        for (size_t i = 0; i< degrees_str.size(); ++i ){
+				bgp_plan -> node_degrees.push_back(degrees_str[i] - '0');
+			}
+			size_t pos = 0;
+			string token;
+			while ((pos = variables_str.find("?")) != string::npos) {
+				token = variables_str.substr(0, pos);
+				bgp_plan -> variable_nodes.push_back("?" + token);
+				variables_str.erase(0, pos + 1);
+			}
+			bgp_plan -> variable_nodes.push_back("?" + variables_str);
+        	} catch (...) {
+			cout << "Fallback to default plan." << endl;
+			bgp_plan -> do_plan = false;
+		}
+	}else {
+                cout << "default plan" << endl;
+        }
+
+
 
 	ResultSet rs;
 	int query_time = Util::get_cur_time();
